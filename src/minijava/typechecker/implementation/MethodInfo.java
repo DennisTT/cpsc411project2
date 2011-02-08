@@ -7,11 +7,11 @@ import minijava.util.FunTable;
 import minijava.util.Indentable;
 import minijava.util.IndentingWriter;
 
-public class MethodInfo implements Indentable {
+public class MethodInfo implements Info, Indentable {
 	public Type returnType;
 	public ArrayList<VarInfo> formalsList;
-	public FunTable formals;
-	public FunTable locals;
+	public FunTable<Info> formals;
+	public FunTable<Info> locals;
 	
 	@Override
 	public void dump(IndentingWriter out) {

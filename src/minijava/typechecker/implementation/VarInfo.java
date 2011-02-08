@@ -5,7 +5,7 @@ import minijava.ast.Type;
 import minijava.util.Indentable;
 import minijava.util.IndentingWriter;
 
-public class VarInfo implements Indentable {
+public class VarInfo implements Info, Indentable {
 	public VarDecl.Kind kind;
 	public Type type;
 	

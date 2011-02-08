@@ -4,10 +4,10 @@ import minijava.util.FunTable;
 import minijava.util.Indentable;
 import minijava.util.IndentingWriter;
 
-public class ClassInfo implements Indentable {
+public class ClassInfo implements Info, Indentable {
 	public String superClass;
-	public FunTable<VarInfo> fields;
-	public FunTable<MethodInfo> methods;
+	public FunTable<Info> fields;
+	public FunTable<Info> methods;
 	
 	@Override
 	public void dump(IndentingWriter out) {

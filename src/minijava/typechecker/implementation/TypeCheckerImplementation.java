@@ -1,26 +1,34 @@
 package minijava.typechecker.implementation;
 
 import minijava.ast.AST;
+import minijava.typechecker.ErrorReport;
 import minijava.typechecker.TypeChecked;
+import minijava.typechecker.TypeCheckerException;
 import minijava.util.FunTable;
 
 public class TypeCheckerImplementation {
 
 	private AST program;
-	private FunTable classTable;
+	private FunTable<Info> classTable;
 	
 	public TypeCheckerImplementation(AST program)
 	{
-		this.program = program;
+	  this.program = program;
 	}
 	
-	public TypeChecked typeCheck()
+	public TypeChecked typeCheck() throws TypeCheckerException
 	{
-		return program.accept(new TypeCheckVisitor());
+    this.buildClassTable();
+    
+    ErrorReport e = new ErrorReport();
+	  TypeChecked t = this.program.accept(new TypeCheckVisitor(this.classTable, e));
+    e.close();
+	  return t;
 	}
 
 	public Object buildClassTable()
 	{
-		return classTable;
+	  this.classTable = this.program.accept(new ClassTableVisitor());
+	  return this.classTable;
 	}
 }
