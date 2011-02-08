@@ -451,7 +451,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
 
   @Override
   public TypeChecked visit(Call n) {
-    // TODO Auto-generated method stub
+    // TODO: auto generated whatever...
     return null;
   }
 
@@ -492,9 +492,11 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   }
 
   @Override
-  public TypeChecked visit(NewArray n) {
-    // TODO Auto-generated method stub
-    return null;
+  public TypeChecked visit(NewArray n)
+  {
+    TypeCheckedImplementation t = new TypeCheckedImplementation();
+    t.type = new IntArrayType();
+    return t;
   }
 
   @Override
