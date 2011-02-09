@@ -696,18 +696,49 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
       return null;
     }
     
+    // Check argument count
     if(m.formalsList.size() != n.rands.size())
     {
       this.error.wrongNumberOfArguments(n, m.formalsList.size());
       return null;
     }
     
+    // Check argument types
     for(int i = 0; i < m.formalsList.size(); i++)
     {
       TypeCheckedImplementation randType = (TypeCheckedImplementation) n.rands.elementAt(i).accept(this);
       if(randType != null && !m.formalsList.get(i).type.equals(randType.type))
       {
-        this.error.typeError(n.rands.elementAt(i), m.formalsList.get(i).type, randType.type);
+        // Check class hierarchy only if both expected and actual types are ObjectTypes
+        boolean argIsSubclass = false;
+        if(m.formalsList.get(i).type instanceof ObjectType && randType.type instanceof ObjectType)
+        {
+          String expectedClassName = ((ObjectType) m.formalsList.get(i).type).name;
+          String argClassName = ((ObjectType) randType.type).name;
+          
+          // Find the superclass name and iterate through parents
+          ClassInfo info = this.lookupClassInfo(argClassName);
+          while(info != null && info.superClass != null && !argIsSubclass)
+          {
+            if(expectedClassName.equals(info.superClass))
+            {
+              // The argument is a subclass of the expected class, so mark found
+              // and don't error in the future
+              argIsSubclass = true;
+            }
+            else
+            {
+              // Find the superclass and reiterate
+              info = this.lookupClassInfo(info.superClass);
+            }
+          }
+        }
+        
+        // Throw a type error if it doesn't match anything
+        if(!argIsSubclass)
+        {
+          this.error.typeError(n.rands.elementAt(i), m.formalsList.get(i).type, randType.type);
+        }
       }
     }
     
