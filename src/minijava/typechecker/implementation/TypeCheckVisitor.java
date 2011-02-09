@@ -413,7 +413,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     
     if(!v.type.equals(new IntArrayType()))
     {
-      // Report type
+      // Report type errors
       this.error.typeError(new IdentifierExp(n.name), new IntArrayType(), v.type);
       return null;
     }
