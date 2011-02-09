@@ -156,7 +156,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     
     // Check duplicate method names
     map = new HashSet<String>();
-    for(int i = 0; i < d.methods.size(); i++)
+    for(int i = 0; i < d.methods.size(); ++i)
     {
       String methodName = d.methods.elementAt(i).name;
       if(map.contains(methodName))
