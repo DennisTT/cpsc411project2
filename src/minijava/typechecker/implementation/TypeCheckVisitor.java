@@ -298,7 +298,28 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     // Check return type
     if(t != null && !t.type.equals(m.returnType))
     {
-      this.error.typeError(n.returnExp, m.returnType, t.type);
+      boolean isValidReturnType = false;
+      
+      // Check return type with return expression's superclass type
+      // Iterate entire class hierarchy
+      ClassInfo currentInfo = this.lookupClassInfo(t.type.toString());
+      while(currentInfo != null)
+      {
+        if(currentInfo.name.equals(m.returnType.toString()))
+        {
+          // Return expression type is a subclass of the return type
+          isValidReturnType = true;
+          break;
+        }
+        
+        currentInfo = this.lookupClassInfo(currentInfo.superClass);
+      }
+      
+      if(!isValidReturnType)
+      {
+        // Report type errors
+        this.error.typeError(n.returnExp, m.returnType, t.type);
+      }
     }
     
     return t;
@@ -396,9 +417,29 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     
     if(!t.type.equals(v.type))
     {
-      // Report type errors
-      this.error.typeError(n.value, v.type, t.type);
-      return null;
+      boolean isValidType = false;
+      
+      // Check variable type with value's superclass type
+      // Iterate entire class hierarchy
+      ClassInfo currentInfo = this.lookupClassInfo(t.type.toString());
+      while(currentInfo != null)
+      {
+        if(currentInfo.name.equals(v.type.toString()))
+        {
+          // value's type is a subclass of the variable type
+          isValidType = true;
+          break;
+        }
+        
+        currentInfo = this.lookupClassInfo(currentInfo.superClass);
+      }
+      
+      if(!isValidType)
+      {
+        // Report type errors
+        this.error.typeError(n.value, v.type, t.type);
+        return null;
+      }
     }
     
     return t;
