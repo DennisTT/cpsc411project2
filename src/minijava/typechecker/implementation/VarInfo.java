@@ -6,12 +6,12 @@ import minijava.util.Indentable;
 import minijava.util.IndentingWriter;
 
 public class VarInfo implements Info, Indentable {
-	public VarDecl.Kind kind;
-	public Type type;
-	
-	@Override
-	public void dump(IndentingWriter out) {
-		// TODO Auto-generated method stub
-		
-	}
+  public VarDecl.Kind kind;
+  public Type type;
+  
+  @Override
+  public void dump(IndentingWriter out)
+  {
+    out.print("VarInfo { " + this.kind + " " + this.type + "}");
+  }
 }

@@ -34,11 +34,12 @@ public class ClassTableVisitor implements Visitor<FunTable<Info>>
     
     // Add main() to ClassInfo
     MethodInfo m  = new MethodInfo();
-    m.formals     = t.insert(n.argName, null);
+    m.formals     = t;
     m.locals      = t;
     m.formalsList = new ArrayList<VarInfo>();
     
     ClassInfo c = new ClassInfo();
+    c.name      = n.className;
     c.fields    = t;
     c.methods   = t.insert("main", m);
     
@@ -50,6 +51,7 @@ public class ClassTableVisitor implements Visitor<FunTable<Info>>
   public FunTable<Info> visit(ClassDecl n)
   {
     ClassInfo c   = new ClassInfo();
+    c.name        = n.name;
     c.superClass  = n.superName;
     c.fields      = n.vars.accept(this);
     c.methods     = n.methods.accept(this);
