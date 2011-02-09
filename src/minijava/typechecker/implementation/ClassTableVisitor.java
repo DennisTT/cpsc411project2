@@ -3,7 +3,6 @@ package minijava.typechecker.implementation;
 import java.util.ArrayList;
 
 import minijava.ast.*;
-import minijava.ast.VarDecl.Kind;
 import minijava.util.FunTable;
 import minijava.visitor.Visitor;
 
