@@ -34,7 +34,7 @@ public class ClassTableVisitor implements Visitor<FunTable<Info>>
     MethodInfo m = new MethodInfo();
     m.formals = t.insert(n.argName, null);
     m.locals = t;
-//  m.formalsList
+    m.formalsList = new ArrayList<VarInfo>();
     
     ClassInfo c = new ClassInfo();
     c.fields = t;
