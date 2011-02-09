@@ -16,13 +16,15 @@ public class ClassTableVisitor implements Visitor<FunTable<Info>>
     {
       t = t.merge(n.elementAt(i).accept(this));
     }
+    
     return t;
   }
 
   @Override
-  public FunTable<Info> visit(Program p)
+  public FunTable<Info> visit(Program n)
   {
-    return p.mainClass.accept(this).merge(p.classes.accept(this));
+    return n.mainClass.accept(this)
+                      .merge(n.classes.accept(this));
   }
 
   @Override
@@ -31,156 +33,170 @@ public class ClassTableVisitor implements Visitor<FunTable<Info>>
     FunTable<Info> t = FunTable.theEmpty();
     
     // Add main() to ClassInfo
-    MethodInfo m = new MethodInfo();
-    m.formals = t.insert(n.argName, null);
-    m.locals = t;
+    MethodInfo m  = new MethodInfo();
+    m.formals     = t.insert(n.argName, null);
+    m.locals      = t;
     m.formalsList = new ArrayList<VarInfo>();
     
     ClassInfo c = new ClassInfo();
-    c.fields = t;
-    c.methods = t.insert("main", m);
+    c.fields    = t;
+    c.methods   = t.insert("main", m);
     
     return t.insert("Main", c).merge(n.statement.accept(this));
   }
 
   @Override
-  public FunTable<Info> visit(ClassDecl d)
+  public FunTable<Info> visit(ClassDecl n)
   {
-    ClassInfo c = new ClassInfo();
-    c.superClass = d.superName;
-    c.fields = d.vars.accept(this);
-    c.methods = d.methods.accept(this);
+    ClassInfo c   = new ClassInfo();
+    c.superClass  = n.superName;
+    c.fields      = n.vars.accept(this);
+    c.methods     = n.methods.accept(this);
     
     FunTable<Info> t = FunTable.theEmpty();
-    return t.insert(d.name, c);
+    return t.insert(n.name, c);
   }
 
   @Override
-  public FunTable<Info> visit(VarDecl d)
+  public FunTable<Info> visit(VarDecl n)
   {
     VarInfo v = new VarInfo();
-    v.kind = d.kind;
-    v.type = d.type;
+    v.kind    = n.kind;
+    v.type    = n.type;
     
     FunTable<Info> t = FunTable.theEmpty();
-    return t.insert(d.name, v);
+    return t.insert(n.name, v);
   }
 
   @Override
-  public FunTable<Info> visit(MethodDecl d)
+  public FunTable<Info> visit(MethodDecl n)
   {
-    FunTable<Info> t = FunTable.theEmpty();
-    
-    MethodInfo m = new MethodInfo();
-    m.formals = d.formals.accept(this);
-    m.locals = d.vars.accept(this);
-    m.returnType = d.returnType;
+    MethodInfo m  = new MethodInfo();
+    m.formals     = n.formals.accept(this);
     m.formalsList = new ArrayList<VarInfo>();
-    for(int i = 0; i < d.formals.size(); i++)
+    m.locals      = n.vars.accept(this);
+    m.returnType  = n.returnType;
+    
+    for(int i = 0; i < n.formals.size(); ++i)
     {
-      VarInfo v = new VarInfo();
-      v.kind = d.formals.elementAt(i).kind;
-      v.type = d.formals.elementAt(i).type;
+      VarDecl d   = n.formals.elementAt(i);
+      VarInfo v   = new VarInfo();
+      v.kind      = d.kind;
+      v.type      = d.type;
       m.formalsList.add(v);
     }
     
-    return t.insert(d.name, m).merge(d.statements.accept(this).merge(d.returnExp.accept(this)));
+    FunTable<Info> t = FunTable.theEmpty();
+    return t.insert(n.name, m)
+            .merge( n.statements.accept(this)
+                                .merge(n.returnExp.accept(this)));
   }
 
   @Override
   public FunTable<Info> visit(IntArrayType n) { return FunTable.theEmpty(); }
 
   @Override
-  public FunTable<Info> visit(BooleanType n) { return FunTable.theEmpty(); }
+  public FunTable<Info> visit(BooleanType n)  { return FunTable.theEmpty(); }
 
   @Override
-  public FunTable<Info> visit(IntegerType n) { return FunTable.theEmpty(); }
+  public FunTable<Info> visit(IntegerType n)  { return FunTable.theEmpty(); }
 
   @Override
-  public FunTable<Info> visit(ObjectType n) { return FunTable.theEmpty(); }
+  public FunTable<Info> visit(ObjectType n)   { return FunTable.theEmpty(); }
 
   @Override
-  public FunTable<Info> visit(Block b)
+  public FunTable<Info> visit(Block n)
   {
-    return b.statements.accept(this);
+    return n.statements.accept(this);
   }
 
   @Override
-  public FunTable<Info> visit(If i)
+  public FunTable<Info> visit(If n)
   {
-    return i.tst.accept(this).merge(i.thn.accept(this).merge(i.els.accept(this)));
+    return n.tst.accept(this)
+                .merge(n.thn.accept(this)
+                            .merge(n.els.accept(this)));
   }
 
   @Override
-  public FunTable<Info> visit(While w)
+  public FunTable<Info> visit(While n)
   {
-    return w.tst.accept(this).merge(w.body.accept(this));
+    return n.tst.accept(this)
+                .merge(n.body.accept(this));
   }
 
   @Override
-  public FunTable<Info> visit(Print p)
+  public FunTable<Info> visit(Print n)
   {
-    return p.exp.accept(this);
+    return n.exp.accept(this);
   }
 
   @Override
-  public FunTable<Info> visit(Assign a)
+  public FunTable<Info> visit(Assign n)
   {
-    return a.value.accept(this);
+    return n.value.accept(this);
   }
 
   @Override
-  public FunTable<Info> visit(ArrayAssign a)
+  public FunTable<Info> visit(ArrayAssign n)
   {
-    return a.index.accept(this).merge(a.value.accept(this));
+    return n.index.accept(this)
+                  .merge(n.value.accept(this));
   }
 
   @Override
-  public FunTable<Info> visit(And a)
+  public FunTable<Info> visit(And n)
   {
-    return a.e1.accept(this).merge(a.e2.accept(this));
+    return  n.e1.accept(this)
+                .merge(n.e2.accept(this));
   }
 
   @Override
-  public FunTable<Info> visit(LessThan l)
+  public FunTable<Info> visit(LessThan n)
   {
-    return l.e1.accept(this).merge(l.e2.accept(this));
+    return  n.e1.accept(this)
+                .merge(n.e2.accept(this));
   }
 
   @Override
-  public FunTable<Info> visit(Plus p)
+  public FunTable<Info> visit(Plus n)
   {
-    return p.e1.accept(this).merge(p.e2.accept(this));
+    return  n.e1.accept(this)
+                .merge(n.e2.accept(this));
   }
 
   @Override
-  public FunTable<Info> visit(Minus m)
+  public FunTable<Info> visit(Minus n)
   {
-    return m.e1.accept(this).merge(m.e2.accept(this));
+    return  n.e1.accept(this)
+                .merge(n.e2.accept(this));
   }
 
   @Override
-  public FunTable<Info> visit(Times t)
+  public FunTable<Info> visit(Times n)
   {
-    return t.e1.accept(this).merge(t.e2.accept(this));
+    return  n.e1.accept(this)
+                .merge(n.e2.accept(this));
   }
 
   @Override
-  public FunTable<Info> visit(ArrayLookup a)
+  public FunTable<Info> visit(ArrayLookup n)
   {
-    return a.index.accept(this).merge(a.array.accept(this));
+    return n.index.accept(this)
+                  .merge(n.array.accept(this));
   }
 
   @Override
-  public FunTable<Info> visit(ArrayLength a)
+  public FunTable<Info> visit(ArrayLength n)
   {
-    return a.array.accept(this);
+    return n.array.accept(this);
   }
 
   @Override
-  public FunTable<Info> visit(Call c)
+  public FunTable<Info> visit(Call n)
   {
-    return c.receiver.accept(this).merge(c.rands.accept(this));
+    return  n.receiver.accept(this)
+                      .merge(n.rands.accept(this));
   }
 
   @Override
@@ -190,10 +206,10 @@ public class ClassTableVisitor implements Visitor<FunTable<Info>>
   public FunTable<Info> visit(BooleanLiteral n) { return FunTable.theEmpty(); }
 
   @Override
-  public FunTable<Info> visit(IdentifierExp n) { return FunTable.theEmpty(); }
+  public FunTable<Info> visit(IdentifierExp n)  { return FunTable.theEmpty(); }
 
   @Override
-  public FunTable<Info> visit(This n) { return FunTable.theEmpty(); }
+  public FunTable<Info> visit(This n)           { return FunTable.theEmpty(); }
 
   @Override
   public FunTable<Info> visit(NewArray n)
@@ -202,7 +218,7 @@ public class ClassTableVisitor implements Visitor<FunTable<Info>>
   }
 
   @Override
-  public FunTable<Info> visit(NewObject n) { return FunTable.theEmpty(); }
+  public FunTable<Info> visit(NewObject n)      { return FunTable.theEmpty(); }
 
   @Override
   public FunTable<Info> visit(Not n)
