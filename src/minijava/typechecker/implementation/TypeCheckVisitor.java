@@ -192,6 +192,48 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     
     this.currentMethod = n.name;
     
+    // Compare method with superclass' declaration (if it exists)
+    if(c.superClass != null)
+    {
+      ClassInfo currentInfo = this.lookupClassInfo(c.superClass);
+      while(currentInfo != null)
+      {
+        // Check for method in superclass
+        MethodInfo superMethod = (MethodInfo) currentInfo.methods.lookup(this.currentMethod);
+        if(superMethod != null)
+        {
+          // Compare method signatures
+          // NOTE: This language does not support method overloading. Arguments 
+          // length is expected to be the same.
+          int length = m.formalsList.size();
+          if(length != superMethod.formalsList.size())
+          {
+            this.error.badMethodOverriding(new ObjectType(this.currentClass), this.currentMethod);
+            return null;
+          }
+          
+          // Check that the method signature is exactly the same
+          for(int i = 0; i < length; ++i)
+          {
+            if(!m.formalsList.get(i).type.equals(superMethod.formalsList.get(i).type))
+            {
+              this.error.badMethodOverriding(new ObjectType(this.currentClass), this.currentMethod);
+              return null;
+            }
+          }
+          
+          // Check return type is the same
+          if(!m.returnType.equals(superMethod.returnType))
+          {
+            this.error.badMethodOverriding(new ObjectType(this.currentClass), this.currentMethod);
+            return null;
+          }
+        }
+        
+        currentInfo = this.lookupClassInfo(currentInfo.superClass);
+      }
+    }
+    
     n.formals.accept(this);
     n.vars.accept(this);
     n.statements.accept(this);
@@ -415,8 +457,8 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   {
     TypeCheckedImplementation t1 = (TypeCheckedImplementation) n.e1.accept(this),
                               t2 = (TypeCheckedImplementation) n.e2.accept(this);
-    boolean b1 = t1.type.equals(new IntegerType()),
-            b2 = t2.type.equals(new IntegerType());
+    boolean b1 = (t1 == null || t1.type.equals(new IntegerType())),
+            b2 = (t2 == null || t2.type.equals(new IntegerType()));
     
     if(!b1 || !b2)
     {
@@ -441,8 +483,8 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   {
     TypeCheckedImplementation t1 = (TypeCheckedImplementation) n.e1.accept(this),
                               t2 = (TypeCheckedImplementation) n.e2.accept(this);
-    boolean b1 = (t1 == null || t1.type.equals(new IntegerType())),
-            b2 = (t2 == null || t2.type.equals(new IntegerType()));
+    boolean b1 = t1.type.equals(new IntegerType()),
+            b2 = t2.type.equals(new IntegerType());
     
     if(!b1 || !b2)
     {
@@ -549,7 +591,23 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
       return null;
     }
     
-    MethodInfo m = (MethodInfo) c.methods.lookup(n.name);
+    // Check for method declaration
+    // Iterate entire parent hierarchy in case method is inherited
+    MethodInfo m = null;
+    ClassInfo currentInfo = c;
+    do
+    {
+      m = (MethodInfo) currentInfo.methods.lookup(n.name);
+      if(m != null)
+      {
+        // Method found in class hierarchy
+        break;
+      }
+      
+      currentInfo = this.lookupClassInfo(currentInfo.superClass);
+    }
+    while(currentInfo != null);
+    
     if(m == null)
     {
       this.error.undefinedId(n.name);
@@ -669,7 +727,22 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     
     if(v == null)
     {
-      v = c.fields.lookup(id);
+      // Check for identifier in class declaration
+      // If not found, check if it is inherited
+      // Iterate entire parent hierarchy
+      do
+      {
+        v = c.fields.lookup(id);
+        if(v != null)
+        {
+          // Identifier found in class hierarchy
+          break;
+        }
+        
+        c = this.lookupClassInfo(c.superClass);
+      }
+      while(c != null);
+      
       if(v == null)
       {
         this.error.undefinedId(id);
