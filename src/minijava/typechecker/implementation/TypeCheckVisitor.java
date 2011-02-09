@@ -27,6 +27,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   @Override
   public <T extends AST> TypeChecked visit(NodeList<T> ns)
   {
+    // Iterate all nodes and perform type checking
     for(int i = 0; i < ns.size(); ++i) { ns.elementAt(i).accept(this); }
     
     return new TypeCheckedImplementation(null);
@@ -35,6 +36,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   @Override
   public TypeChecked visit(Program p)
   {
+    // Type check MainClass and other classes
     p.mainClass.accept(this);
     p.classes.accept(this);
     
@@ -52,6 +54,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     this.currentClass   = c.className;
     this.currentMethod  = "main";
     
+    // Type check statements
     return c.statement.accept(this);
   }
 
@@ -85,6 +88,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
             String id = it.next().getId();
             if(currentInfo.fields.lookup(id) != null)
             {
+              // Method declared with same name by superclass
               this.error.fieldOverriding(new ObjectType(d.name), id);
               isValidMethodOverride = false;
             }
@@ -96,7 +100,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
       }
     }
     
-    // Check duplicate class names
+    // Check for duplicate class declarations
     int counter = 0;
     Iterator<Entry<Info>> it = this.table.iterator();
     while(it.hasNext())
@@ -110,6 +114,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
         !isValidMethodOverride ||
         !isUniqueClass)
     {
+      // Report type errors
       if(!isValidSuperclass)  { this.error.undefinedId(d.superName); }
       if(!isValidClass)       { this.error.undefinedId(d.name); }
       if(!isUniqueClass)      { this.error.duplicateDefinition(d.name); }
@@ -175,6 +180,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     
     if(!isValidIdentifier || !isValidType)
     {
+      // Report type errors
       if(!isValidIdentifier)  { this.error.undefinedId(n.name); }
       if(!isValidType)        { this.error.undefinedId(((ObjectType) type).name); }
       return null;
@@ -197,11 +203,13 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     
     if(!isValidMethod || !isValidType)
     {
+      // Report type errors
       if(!isValidMethod)  { this.error.undefinedId(n.name); }
       if(!isValidType)    { this.error.undefinedId(((ObjectType) type).name); }
       return null;
     }
     
+    // Set method context
     this.currentMethod = n.name;
     
     // Compare method with superclass' declaration (if it exists)
@@ -246,7 +254,8 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
       }
     }
     
-    // Check duplicate formals names
+    // Check for duplicate arguments
+    // Add unique arguments to map
     HashSet<String> map = new HashSet<String>();
     for(int i = 0; i < n.formals.size(); ++i)
     {
@@ -261,7 +270,8 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
       }
     }
     
-    // Check duplicate local names adding to previous map from formals
+    // Check for duplicate local variables
+    // Add unique local variables to map
     for(int i = 0; i < n.vars.size(); ++i)
     {
       String varName = n.vars.elementAt(i).name;
@@ -275,12 +285,14 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
       }
     }
     
+    // Type check arguments, local variables, and statements
     n.formals.accept(this);
     n.vars.accept(this);
     n.statements.accept(this);
     
     TypeCheckedImplementation t = (TypeCheckedImplementation) n.returnExp.accept(this);
     
+    // Reset method context
     this.currentMethod = null;
     
     // Check return type
@@ -319,6 +331,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   @Override
   public TypeChecked visit(Block b)
   {
+    // Type check statements
     return b.statements.accept(this);
   }
 
@@ -328,10 +341,12 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     TypeCheckedImplementation t = (TypeCheckedImplementation) n.tst.accept(this);
     if(t != null && !t.type.equals(new BooleanType()))
     {
+      // Report type errors
       this.error.typeError(n.tst, new BooleanType(), t.type);
       return null;
     }
     
+    // Type check then, and else statements
     n.thn.accept(this);
     n.els.accept(this);
     
@@ -344,10 +359,12 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     TypeCheckedImplementation t = (TypeCheckedImplementation) n.tst.accept(this);
     if(t != null && !t.type.equals(new BooleanType()))
     {
+      // Report type errors
       this.error.typeError(n.tst, new BooleanType(), t.type);
       return null;
     }
     
+    // Type check body
     n.body.accept(this);
     
     return t;
@@ -359,6 +376,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     TypeCheckedImplementation t = (TypeCheckedImplementation) n.exp.accept(this);
     if(t != null && !t.type.equals(new IntegerType()))
     {
+      // Report type errors
       this.error.typeError(n.exp, new IntegerType(), t.type);
     }
     
@@ -368,14 +386,17 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   @Override
   public TypeChecked visit(Assign n)
   {
+    // Type check value
     TypeCheckedImplementation t = (TypeCheckedImplementation) n.value.accept(this);
     if(t == null) { return null; }
     
+    // Check for valid variable
     VarInfo v = this.lookupVarInfo(n.name);
     if(v == null) { return null; }
     
     if(!t.type.equals(v.type))
     {
+      // Report type errors
       this.error.typeError(n.value, v.type, t.type);
       return null;
     }
@@ -386,15 +407,18 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   @Override
   public TypeChecked visit(ArrayAssign n)
   {
+    // Check for valid variable
     VarInfo v = this.lookupVarInfo(n.name);
     if(v == null) { return null; }
     
     if(!v.type.equals(new IntArrayType()))
     {
+      // Report type
       this.error.typeError(new IdentifierExp(n.name), new IntArrayType(), v.type);
       return null;
     }
     
+    // Type check value and index
     TypeCheckedImplementation t1  = (TypeCheckedImplementation) n.value.accept(this),
                               t2  = (TypeCheckedImplementation) n.index.accept(this);
     boolean isValidTypeLeft       = t1.type.equals(new IntegerType()),
@@ -402,6 +426,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     
     if(!isValidTypeLeft || !isValidTypeRight)
     {
+      // Report type errors
       if(!isValidTypeLeft)  { this.error.typeError( n.value,
                                                     new IntegerType(),
                                                     t1.type); }
@@ -417,6 +442,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   @Override
   public TypeChecked visit(And n)
   {
+    // Type check left and right expressions
     TypeCheckedImplementation t1  = (TypeCheckedImplementation) n.e1.accept(this),
                               t2  = (TypeCheckedImplementation) n.e2.accept(this);
     boolean isValidTypeLeft       = t1.type.equals(new BooleanType()),
@@ -424,6 +450,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     
     if(!isValidTypeLeft || !isValidTypeRight)
     {
+      // Report type errors
       if(!isValidTypeLeft)  { this.error.typeError( n.e1,
                                                     new BooleanType(),
                                                     t1.type); }
@@ -439,6 +466,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   @Override
   public TypeChecked visit(LessThan n)
   {
+    // Type check left and right expressions
     TypeCheckedImplementation t1  = (TypeCheckedImplementation) n.e1.accept(this),
                               t2  = (TypeCheckedImplementation) n.e2.accept(this);
     boolean isValidTypeLeft       = t1.type.equals(new IntegerType()),
@@ -446,6 +474,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     
     if(!isValidTypeLeft || !isValidTypeRight)
     {
+      // Report type errors
       if(!isValidTypeLeft)  { this.error.typeError( n.e1,
                                                     new IntegerType(),
                                                     t1.type); }
@@ -461,6 +490,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   @Override
   public TypeChecked visit(Plus n)
   {
+    // Type check left and right expressions
     TypeCheckedImplementation t1  = (TypeCheckedImplementation) n.e1.accept(this),
                               t2  = (TypeCheckedImplementation) n.e2.accept(this);
     boolean isValidTypeLeft       = (t1 == null || t1.type.equals(new IntegerType())),
@@ -468,6 +498,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     
     if(!isValidTypeLeft || !isValidTypeRight)
     {
+      // Report type errors
       if(!isValidTypeLeft)  { this.error.typeError( n.e1,
                                                     new IntegerType(),
                                                     t1.type); }
@@ -483,6 +514,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   @Override
   public TypeChecked visit(Minus n)
   {
+    // Type check left and right expressions
     TypeCheckedImplementation t1  = (TypeCheckedImplementation) n.e1.accept(this),
                               t2  = (TypeCheckedImplementation) n.e2.accept(this);
     boolean isValidTypeLeft       = t1.type.equals(new IntegerType()),
@@ -490,6 +522,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     
     if(!isValidTypeLeft || !isValidTypeRight)
     {
+      // Report type errors
       if(!isValidTypeLeft)  { this.error.typeError( n.e1,
                                                     new IntegerType(),
                                                     t1.type); }
@@ -505,6 +538,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   @Override
   public TypeChecked visit(Times n)
   {
+    // Type check left and right expressions
     TypeCheckedImplementation t1  = (TypeCheckedImplementation) n.e1.accept(this),
                               t2  = (TypeCheckedImplementation) n.e2.accept(this);
     boolean isValidTypeLeft       = t1.type.equals(new IntegerType()),
@@ -512,6 +546,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     
     if(!isValidTypeLeft || !isValidTypeRight)
     {
+      // Report type errors
       if(!isValidTypeLeft)  { this.error.typeError( n.e1,
                                                     new IntegerType(),
                                                     t1.type); }
@@ -527,9 +562,11 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   @Override
   public TypeChecked visit(ArrayLookup n)
   {
+    // Type check array and index
     TypeCheckedImplementation t1 = (TypeCheckedImplementation) n.array.accept(this),
                               t2 = (TypeCheckedImplementation) n.index.accept(this);
     
+    // Report type errors
     if(!t1.type.equals(new IntArrayType()))
     {
       this.error.typeError(n.array, new IntArrayType(), t1.type);
@@ -548,9 +585,11 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   @Override
   public TypeChecked visit(ArrayLength n)
   {
+    // Type check array
     TypeCheckedImplementation t1 = (TypeCheckedImplementation) n.array.accept(this);
     if(!t1.type.equals(new IntArrayType()))
     {
+      // Report type errors
       this.error.typeError(n.array, new IntArrayType(), t1.type);
       return null;
     }
@@ -559,10 +598,13 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   }
 
   @Override
-  public TypeChecked visit(Call n) {
+  public TypeChecked visit(Call n)
+  {
+    // Type check receiever
     TypeCheckedImplementation t = (TypeCheckedImplementation) n.receiver.accept(this);
     if(t == null) { return null; }
     
+    // Check for valid class declaration
     if(!(t.type instanceof ObjectType))
     {
       this.error.typeErrorExpectObjectType(n.receiver, t.type);
@@ -592,6 +634,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     }
     while(currentInfo != null);
     
+    // Check for valid method declaration
     if(m == null)
     {
       this.error.undefinedId(n.name);
@@ -636,7 +679,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
           }
         }
         
-        // Throw a type error if it doesn't match anything
+        // Report type error if it doesn't match anything
         if(!argIsSubclass)
         {
           this.error.typeError(n.rands.elementAt(i), m.formalsList.get(i).type, randType.type);
@@ -644,8 +687,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
       }
     }
     
-    t.type = m.returnType;
-    return t;
+    return new TypeCheckedImplementation(m.returnType);
   }
 
   @Override
@@ -663,6 +705,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   @Override
   public TypeChecked visit(IdentifierExp n)
   {
+    // Check for valid variable
     VarInfo v = this.lookupVarInfo(n.name);
     if(v == null) { return null; }
     
@@ -684,6 +727,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   @Override
   public TypeChecked visit(NewObject n)
   {
+    // Check for valid class declaration
     ClassInfo c = this.lookupClassInfo(n.typeName);
     if(c == null)
     {
@@ -697,6 +741,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   @Override
   public TypeChecked visit(Not n)
   {
+    // Check for valid boolean expression
     TypeCheckedImplementation t = (TypeCheckedImplementation) n.e.accept(this);
     if(t != null && !t.type.equals(new BooleanType()))
     {
@@ -706,22 +751,31 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     return t;
   }
   
+  // Helper method for ClassInfo lookup in the symbol table
   private ClassInfo lookupClassInfo(String id)
   {
     return (ClassInfo) this.table.lookup(id);
   }
 
+  // Helper method for VarInfo lookup in the symbol table using the current 
+  // class and current method
   private VarInfo lookupVarInfo(String id)
   {
+    // Obtain ClassInfo for current class
     ClassInfo c = this.lookupClassInfo(this.currentClass);
+    
+    // Obtain MethodInfo for current method in the current class
     MethodInfo m = (MethodInfo) c.methods.lookup(this.currentMethod);
     Info v = null;
     
+    // Check for valid method declaration
     if(m != null)
     {
+      // Attempt to locate identifier in the method's local varaibles
       v = m.locals.lookup(id);
       if(v == null)
       {
+        // Attempt to locate identifier in the method's arguments
         v = m.formals.lookup(id);
       }
     }
@@ -733,6 +787,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
       // Iterate entire parent hierarchy
       do
       {
+        // Attempt to locate identifier in class declaration
         v = c.fields.lookup(id);
         if(v != null)
         {
@@ -746,6 +801,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
       
       if(v == null)
       {
+        // Identifier could not be found
         this.error.undefinedId(id);
         return null;
       }
