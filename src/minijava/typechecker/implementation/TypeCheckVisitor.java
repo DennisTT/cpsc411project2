@@ -206,45 +206,45 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   @Override
   public TypeChecked visit(If n)
   {
-  TypeCheckedImplementation t = (TypeCheckedImplementation) n.tst.accept(this);
-  if(!t.type.equals(new BooleanType()))
-  {
-    this.error.typeError(n.tst, new BooleanType(), t.type);
+    TypeCheckedImplementation t = (TypeCheckedImplementation) n.tst.accept(this);
+    if(!t.type.equals(new BooleanType()))
+    {
+      this.error.typeError(n.tst, new BooleanType(), t.type);
       return null;
-  }
-  
-  n.thn.accept(this);
-  n.els.accept(this);
-  
-  return t;
+    }
+    
+    n.thn.accept(this);
+    n.els.accept(this);
+    
+    return t;
   }
 
   @Override
   public TypeChecked visit(While n)
   {
-  TypeCheckedImplementation t = (TypeCheckedImplementation) n.tst.accept(this);
-  if(!t.type.equals(new BooleanType()))
-  {
-    this.error.typeError(n.tst, new BooleanType(), t.type);
+    TypeCheckedImplementation t = (TypeCheckedImplementation) n.tst.accept(this);
+    if(!t.type.equals(new BooleanType()))
+    {
+      this.error.typeError(n.tst, new BooleanType(), t.type);
       return null;
-  }
-  
-  n.body.accept(this);
-  
-  return t;
+    }
+    
+    n.body.accept(this);
+    
+    return t;
   }
 
   @Override
   public TypeChecked visit(Print n)
   {
-  TypeCheckedImplementation t = (TypeCheckedImplementation) n.exp.accept(this);
-  if(!t.type.equals(new IntegerType()))
-  {
-    this.error.typeError(n.exp, new IntegerType(), t.type);
-      return null;
-  }
-  
-  return t;
+    TypeCheckedImplementation t = (TypeCheckedImplementation) n.exp.accept(this);
+    if(!t.type.equals(new IntegerType()))
+    {
+      this.error.typeError(n.exp, new IntegerType(), t.type);
+        return null;
+    }
+    
+    return t;
   }
 
   @Override
