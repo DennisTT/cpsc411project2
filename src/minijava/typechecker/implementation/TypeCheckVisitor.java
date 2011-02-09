@@ -441,8 +441,8 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   {
     TypeCheckedImplementation t1 = (TypeCheckedImplementation) n.e1.accept(this),
                               t2 = (TypeCheckedImplementation) n.e2.accept(this);
-    boolean b1 = t1.type.equals(new IntegerType()),
-            b2 = t2.type.equals(new IntegerType());
+    boolean b1 = (t1 == null || t1.type.equals(new IntegerType())),
+            b2 = (t2 == null || t2.type.equals(new IntegerType()));
     
     if(!b1 || !b2)
     {
