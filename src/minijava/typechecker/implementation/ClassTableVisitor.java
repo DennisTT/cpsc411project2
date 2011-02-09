@@ -42,7 +42,8 @@ public class ClassTableVisitor implements Visitor<FunTable<Info>>
     c.fields    = t;
     c.methods   = t.insert("main", m);
     
-    return t.insert("Main", c).merge(n.statement.accept(this));
+    return t.insert(n.className, c)
+            .merge(n.statement.accept(this));
   }
 
   @Override
