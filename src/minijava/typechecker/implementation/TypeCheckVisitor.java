@@ -86,30 +86,62 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   }
 
   @Override
-  public TypeChecked visit(VarDecl d)
+  public TypeChecked visit(VarDecl n)
   {
-    ClassInfo c = (ClassInfo) this.lookupClassInfo(this.currentClass);
+    Type type = n.type;
+    
+    // Check identifier and declared object type (if necessary)
+    ClassInfo c = this.lookupClassInfo(this.currentClass);
     MethodInfo m = (MethodInfo) c.methods.lookup(this.currentMethod);
-    if( (m == null || (m.locals.lookup(d.name) == null && m.formals.lookup(d.name) == null)) &&
-        c.fields.lookup(d.name) == null)
+    boolean b1 = ((m != null && ( m.locals.lookup(n.name) != null ||
+                                  m.formals.lookup(n.name) != null)) ||
+                  c.fields.lookup(n.name) != null),
+            b2 = (!(type instanceof ObjectType) ||
+                  this.lookupClassInfo(((ObjectType) type).name) != null);
+    if(!b1 || !b2)
     {
-      this.error.undefinedId(d.name);
+      if(!b1)
+      {
+        this.error.undefinedId(n.name);
+      }
+      
+      if(!b2)
+      {
+        this.error.undefinedId(((ObjectType) type).name);
+      }
+      
       return null;
     }
     
     TypeCheckedImplementation t = new TypeCheckedImplementation();
-    t.type = d.type;
+    t.type = type;
     return t;
   }
 
   @Override
   public TypeChecked visit(MethodDecl n)
   {
+    Type type = n.returnType;
+    
+    // Check method identifier and object return type (if necessary)
     ClassInfo c = (ClassInfo) this.lookupClassInfo(this.currentClass);
     MethodInfo m = (MethodInfo) c.methods.lookup(n.name);
-    if(m == null)
+    boolean b1 = (m != null),
+            b2 = (!(type instanceof ObjectType) ||
+                  this.lookupClassInfo(((ObjectType) type).name) != null);
+    
+    if(!b1 || !b2)
     {
-      this.error.undefinedId(n.name);
+      if(!b1)
+      {
+        this.error.undefinedId(n.name);
+      }
+      
+      if(!b2)
+      {
+        this.error.undefinedId(((ObjectType) type).name);
+      }
+      
       return null;
     }
     
