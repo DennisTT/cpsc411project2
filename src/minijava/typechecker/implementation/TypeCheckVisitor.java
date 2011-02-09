@@ -1,9 +1,12 @@
 package minijava.typechecker.implementation;
 
+import java.util.Iterator;
+
 import minijava.ast.*;
 import minijava.typechecker.ErrorReport;
 import minijava.typechecker.TypeChecked;
 import minijava.util.FunTable;
+import minijava.util.FunTable.Entry;
 import minijava.visitor.Visitor;
 
 public class TypeCheckVisitor implements Visitor<TypeChecked>
@@ -61,14 +64,56 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   @Override
   public TypeChecked visit(ClassDecl d)
   {
-    if(d.superName != null && this.lookupClassInfo(d.superName) == null)
+    ClassInfo info = this.lookupClassInfo(d.name);
+    boolean hasSuper = (d.superName != null),
+            b1 = true,
+            b2 = (info != null),
+            b3 = true;
+    
+    if(hasSuper)
     {
-      this.error.undefinedId(d.superName);
+      // Check superclass type
+      ClassInfo superInfo = this.lookupClassInfo(d.superName);
+      b1 = (superInfo != null);
+      
+      // Check if there are fields that are already declared and inherited from 
+      // the superclass
+      if(b1)
+      {
+        // Iterate entire parent hierarchy
+        ClassInfo currentInfo = superInfo;
+        do
+        {
+          Iterator<Entry<Info>> it = info.fields.iterator();
+          while(it.hasNext())
+          {
+            String id = it.next().getId();
+            if(currentInfo.fields.lookup(id) != null)
+            {
+              this.error.fieldOverriding(new ObjectType(d.name), id);
+              b3 = false;
+            }
+          }
+          
+          currentInfo = this.lookupClassInfo(currentInfo.superClass);
+        }
+        while(currentInfo != null);
+      }
     }
     
-    if(this.lookupClassInfo(d.name) == null)
+    if(!b1 || !b2 || !b3)
     {
-      this.error.undefinedId(d.name);
+      if(!b1)
+      {
+        this.error.undefinedId(d.superName);
+      }
+      
+      if(!b2)
+      {
+        this.error.undefinedId(d.name);
+      }
+      
+      return null;
     }
     
     // Set class context
