@@ -12,11 +12,11 @@ import minijava.visitor.Visitor;
 
 public class TypeCheckVisitor implements Visitor<TypeChecked>
 {
-  private FunTable<Info> table;
-  private ErrorReport error;
+  private FunTable<Info>  table;
+  private ErrorReport     error;
   
-  private String currentClass,
-                 currentMethod;
+  private String          currentClass,
+                          currentMethod;
   
   public TypeCheckVisitor(FunTable<Info> table, ErrorReport error)
   {
@@ -104,18 +104,16 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     }
     
     // Check duplicate class names
-    Iterator<Entry<Info>> it = this.table.iterator();
     int counter = 0;
+    Iterator<Entry<Info>> it = this.table.iterator();
     while(it.hasNext())
     {
-      Entry<Info> entry = it.next();
-      String className = entry.getId();
-      if(className.equals(d.name))
+      if(it.next().getId().equals(d.name))
       {
-        counter++;
+        ++counter;
       }
     }
-    b4 = (counter == 1) ? true : false;
+    b4 = (counter == 1);
     
     
     if(!b1 || !b2 || !b3 || !b4)
@@ -143,7 +141,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     
     // Check duplicate field names
     HashSet<String> map = new HashSet<String>();
-    for(int i = 0; i < d.vars.size(); i++)
+    for(int i = 0; i < d.vars.size(); ++i)
     {
       String fieldName = d.vars.elementAt(i).name;
       if(map.contains(fieldName))
@@ -328,7 +326,6 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     if(t != null && !t.type.equals(m.returnType))
     {
       this.error.typeError(n.returnExp, m.returnType, t.type);
-      return null;
     }
     
     return t;
@@ -410,7 +407,6 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     if(t != null && !t.type.equals(new IntegerType()))
     {
       this.error.typeError(n.exp, new IntegerType(), t.type);
-      return null;
     }
     
     return t;
@@ -653,7 +649,6 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   @Override
   public TypeChecked visit(Call n) {
     TypeCheckedImplementation t = (TypeCheckedImplementation) n.receiver.accept(this);
-    
     if(t == null)
     {
       return null;
@@ -704,7 +699,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     }
     
     // Check argument types
-    for(int i = 0; i < m.formalsList.size(); i++)
+    for(int i = 0; i < m.formalsList.size(); ++i)
     {
       TypeCheckedImplementation randType = (TypeCheckedImplementation) n.rands.elementAt(i).accept(this);
       if(randType != null && !m.formalsList.get(i).type.equals(randType.type))
