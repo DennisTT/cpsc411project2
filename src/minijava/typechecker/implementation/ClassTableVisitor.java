@@ -24,9 +24,21 @@ public class ClassTableVisitor implements Visitor<FunTable<Info>>
   }
 
   @Override
-  public FunTable<Info> visit(MainClass c)
+  public FunTable<Info> visit(MainClass n)
   {
-    return c.statement.accept(this);
+    FunTable<Info> t = FunTable.theEmpty();
+    
+    // Add main() to ClassInfo
+    MethodInfo m = new MethodInfo();
+    m.formals = t.insert(n.argName, null);
+    m.locals = t;
+//  m.formalsList
+    
+    ClassInfo c = new ClassInfo();
+    c.fields = t;
+    c.methods = t.insert("main", m);
+    
+    return t.insert("Main", c).merge(n.statement.accept(this));
   }
 
   @Override
