@@ -238,7 +238,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   public TypeChecked visit(Print n)
   {
     TypeCheckedImplementation t = (TypeCheckedImplementation) n.exp.accept(this);
-    if(!t.type.equals(new IntegerType()))
+    if(t != null && !t.type.equals(new IntegerType()))
     {
       this.error.typeError(n.exp, new IntegerType(), t.type);
         return null;
@@ -483,8 +483,46 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
 
   @Override
   public TypeChecked visit(Call n) {
-    // TODO: auto generated whatever...
-    return null;
+    TypeCheckedImplementation t = (TypeCheckedImplementation) n.receiver.accept(this);
+    
+    if(!(t.type instanceof ObjectType))
+    {
+      this.error.typeErrorExpectObjectType(n.receiver, t.type);
+      return null;
+    }
+    
+    ObjectType objectType = (ObjectType) t.type;
+    ClassInfo c = this.lookupClassInfo(objectType.name);
+    if(c == null)
+    {
+      this.error.undefinedId(objectType.name);
+      return null;
+    }
+    
+    MethodInfo m = (MethodInfo) c.methods.lookup(n.name);
+    if(m == null)
+    {
+      this.error.undefinedId(n.name);
+      return null;
+    }
+    
+    if(m.formalsList.size() != n.rands.size())
+    {
+      this.error.wrongNumberOfArguments(n, m.formalsList.size());
+      return null;
+    }
+    
+    for(int i = 0; i < m.formalsList.size(); i++)
+    {
+      TypeCheckedImplementation randType = (TypeCheckedImplementation) n.rands.elementAt(i).accept(this);
+      if(randType != null && !m.formalsList.get(i).type.equals(randType.type))
+      {
+        this.error.typeError(n.rands.elementAt(i), m.formalsList.get(i).type, randType.type);
+      }
+    }
+    
+    t.type = m.returnType;
+    return t;
   }
 
   @Override
@@ -519,8 +557,9 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
 
   @Override
   public TypeChecked visit(This n) {
-    // TODO Auto-generated method stub
-    return null;
+    TypeCheckedImplementation t = new TypeCheckedImplementation();
+    t.type = new ObjectType(this.currentClass);
+    return t;
   }
 
   @Override

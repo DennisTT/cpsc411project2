@@ -1,6 +1,9 @@
 package minijava.typechecker.implementation;
 
+import java.util.ArrayList;
+
 import minijava.ast.*;
+import minijava.ast.VarDecl.Kind;
 import minijava.util.FunTable;
 import minijava.visitor.Visitor;
 
@@ -73,7 +76,14 @@ public class ClassTableVisitor implements Visitor<FunTable<Info>>
     m.formals = d.formals.accept(this);
     m.locals = d.vars.accept(this);
     m.returnType = d.returnType;
-//  m.formalsList
+    m.formalsList = new ArrayList<VarInfo>();
+    for(int i = 0; i < d.formals.size(); i++)
+    {
+      VarInfo v = new VarInfo();
+      v.kind = d.formals.elementAt(i).kind;
+      v.type = d.formals.elementAt(i).type;
+      m.formalsList.add(v);
+    }
     
     return t.insert(d.name, m).merge(d.statements.accept(this).merge(d.returnExp.accept(this)));
   }

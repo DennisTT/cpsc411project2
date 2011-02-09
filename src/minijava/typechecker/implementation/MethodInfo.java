@@ -1,6 +1,7 @@
 package minijava.typechecker.implementation;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import minijava.ast.Type;
 import minijava.util.FunTable;
@@ -18,9 +19,10 @@ public class MethodInfo implements Info, Indentable {
 		out.println("returnType " + returnType);
 		
 		out.print("formalsList ");
-		while(formalsList.iterator().hasNext())
+		Iterator<VarInfo> it = formalsList.iterator();
+		while(it.hasNext())
 		{
-			formalsList.iterator().next().dump(out);
+		  it.next().dump(out);
 		}
 		out.println();
 		
