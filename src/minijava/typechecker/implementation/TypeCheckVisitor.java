@@ -286,7 +286,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     if(t != null && !t.type.equals(new IntegerType()))
     {
       this.error.typeError(n.exp, new IntegerType(), t.type);
-        return null;
+      return null;
     }
     
     return t;
