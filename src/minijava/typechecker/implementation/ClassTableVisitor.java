@@ -12,7 +12,7 @@ public class ClassTableVisitor implements Visitor<FunTable<Info>>
   public <T extends AST> FunTable<Info> visit(NodeList<T> n)
   {
     FunTable<Info> t = FunTable.theEmpty();
-    for(int i = 0; i < n.size(); ++i)
+    for(int i = n.size()-1; i >= 0; --i)
     {
       t = t.merge(n.elementAt(i).accept(this));
     }
