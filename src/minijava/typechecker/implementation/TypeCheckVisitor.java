@@ -1,5 +1,6 @@
 package minijava.typechecker.implementation;
 
+import java.util.HashSet;
 import java.util.Iterator;
 
 import minijava.ast.*;
@@ -68,7 +69,8 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
     boolean hasSuper = (d.superName != null),
             b1 = true,
             b2 = (info != null),
-            b3 = true;
+            b3 = true,
+            b4 = true;
     
     if(hasSuper)
     {
@@ -101,7 +103,22 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
       }
     }
     
-    if(!b1 || !b2 || !b3)
+    // Check duplicate class names
+    Iterator<Entry<Info>> it = this.table.iterator();
+    int counter = 0;
+    while(it.hasNext())
+    {
+      Entry<Info> entry = it.next();
+      String className = entry.getId();
+      if(className.equals(d.name))
+      {
+        counter++;
+      }
+    }
+    b4 = (counter == 1) ? true : false;
+    
+    
+    if(!b1 || !b2 || !b3 || !b4)
     {
       if(!b1)
       {
@@ -113,11 +130,46 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
         this.error.undefinedId(d.name);
       }
       
+      if(!b4)
+      {
+        this.error.duplicateDefinition(d.name);
+      }
+      
       return null;
     }
     
     // Set class context
     this.currentClass = d.name;
+    
+    // Check duplicate field names
+    HashSet<String> map = new HashSet<String>();
+    for(int i = 0; i < d.vars.size(); i++)
+    {
+      String fieldName = d.vars.elementAt(i).name;
+      if(map.contains(fieldName))
+      {
+        this.error.duplicateDefinition(fieldName);
+      }
+      else
+      {
+        map.add(fieldName);
+      }
+    }
+    
+    // Check duplicate method names
+    map = new HashSet<String>();
+    for(int i = 0; i < d.methods.size(); i++)
+    {
+      String methodName = d.methods.elementAt(i).name;
+      if(map.contains(methodName))
+      {
+        this.error.duplicateDefinition(methodName);
+      }
+      else
+      {
+        map.add(methodName);
+      }
+    }
     
     d.methods.accept(this);
     d.vars.accept(this);
@@ -143,6 +195,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
                   c.fields.lookup(n.name) != null),
             b2 = (!(type instanceof ObjectType) ||
                   this.lookupClassInfo(((ObjectType) type).name) != null);
+    
     if(!b1 || !b2)
     {
       if(!b1)
@@ -231,6 +284,35 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
         }
         
         currentInfo = this.lookupClassInfo(currentInfo.superClass);
+      }
+    }
+    
+    // Check duplicate formals names
+    HashSet<String> map = new HashSet<String>();
+    for(int i = 0; i < n.formals.size(); i++)
+    {
+      String formalName = n.formals.elementAt(i).name;
+      if(map.contains(formalName))
+      {
+        this.error.duplicateDefinition(formalName);
+      }
+      else
+      {
+        map.add(formalName);
+      }
+    }
+    
+    // Check duplicate local names adding to previous map from formals
+    for(int i = 0; i < n.vars.size(); i++)
+    {
+      String varName = n.vars.elementAt(i).name;
+      if(map.contains(varName))
+      {
+        this.error.duplicateDefinition(varName);
+      }
+      else
+      {
+        map.add(varName);
       }
     }
     
