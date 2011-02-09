@@ -207,7 +207,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   public TypeChecked visit(If n)
   {
     TypeCheckedImplementation t = (TypeCheckedImplementation) n.tst.accept(this);
-    if(!t.type.equals(new BooleanType()))
+    if(t != null && !t.type.equals(new BooleanType()))
     {
       this.error.typeError(n.tst, new BooleanType(), t.type);
       return null;
@@ -223,7 +223,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   public TypeChecked visit(While n)
   {
     TypeCheckedImplementation t = (TypeCheckedImplementation) n.tst.accept(this);
-    if(!t.type.equals(new BooleanType()))
+    if(t != null && !t.type.equals(new BooleanType()))
     {
       this.error.typeError(n.tst, new BooleanType(), t.type);
       return null;
@@ -485,6 +485,11 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   public TypeChecked visit(Call n) {
     TypeCheckedImplementation t = (TypeCheckedImplementation) n.receiver.accept(this);
     
+    if(t == null)
+    {
+      return null;
+    }
+    
     if(!(t.type instanceof ObjectType))
     {
       this.error.typeErrorExpectObjectType(n.receiver, t.type);
@@ -589,7 +594,7 @@ public class TypeCheckVisitor implements Visitor<TypeChecked>
   public TypeChecked visit(Not n)
   {
     TypeCheckedImplementation t = (TypeCheckedImplementation) n.e.accept(this);
-    if(!t.type.equals(new BooleanType()))
+    if(t != null && !t.type.equals(new BooleanType()))
     {
       this.error.typeError(n.e, new BooleanType(), t.type);
     }
